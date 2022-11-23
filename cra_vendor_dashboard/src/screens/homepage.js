@@ -7,12 +7,15 @@ import {
   getDocs,
   deleteDoc,
   doc,
+  updateDoc,
 } from "@firebase/firestore";
 //import NavBar from "../components/navBar";
 export default function HomePage() {
   const [toCreate, setToCreate] = useState(false);
   const [deleted, setDeleted] = useState(false);
   const [successfeedback, setSuccessFeedback] = useState(false);
+  const [anEmptyFields, setEmptyFields] = useState(false);
+  const [updated, setUpdated] = useState(false);
   const [firestoreData, setFirestoreData] = useState([]);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -20,29 +23,42 @@ export default function HomePage() {
 
   const ref = collection(firestore, "Users");
   const createInFirebase = () => {
-    addDoc(ref, {
-      Name: name,
-      Email: email,
-      Address: address,
-    })
-      .then(uploadComplete())
-      .catch((e) => {
-        console.log(e);
-      });
+    if (name !== "" && email !== "" && address !== "") {
+      addDoc(ref, {
+        Name: name,
+        Email: email,
+        Address: address,
+        Status: "Not Activated",
+      })
+        .then(uploadComplete(), setToCreate(false))
+        .catch((e) => {
+          console.log(e);
+        });
+    } else {
+      emptyFields();
+    }
   };
   const uploadComplete = () => {
     return setSuccessFeedback(true);
+  };
+  const emptyFields = () => {
+    const element = document.getElementById("emptyWarning");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+    return setEmptyFields(true);
   };
   const getData = async () => {
     const querySnapshot = await getDocs(ref);
     const fetchedData = [];
     querySnapshot.forEach((doc) => {
-      const { Name, Email, Address } = doc.data();
+      const { Name, Email, Address, Status } = doc.data();
       fetchedData.push({
         id: doc.id,
         Name,
         Email,
         Address,
+        Status,
       });
     });
     setFirestoreData(fetchedData);
@@ -52,14 +68,22 @@ export default function HomePage() {
       setDeleted(true);
     });
   };
+  const updateData = async (id) => {
+    await updateDoc(doc(firestore, "Users", id), { Status: "Activated" }).then(
+      () => {
+        setUpdated(true);
+      }
+    );
+  };
+
   useEffect(() => {
     getData();
-  }, []);
+  }, [deleted, toCreate, updated]);
   return (
     <>
       <div className="container">
         {deleted && (
-          <div class="alert alert-danger" role="alert">
+          <div className="alert alert-danger" role="alert">
             Entry Deleted
             <button
               className="btn btn-outline-danger d-flex justify-content-between"
@@ -73,7 +97,7 @@ export default function HomePage() {
           </div>
         )}
         {successfeedback && (
-          <div class="alert alert-primary" role="alert">
+          <div className="alert alert-primary" role="alert">
             Entry Created
             <button
               className="btn btn-outline-primary d-flex justify-content-between"
@@ -86,9 +110,37 @@ export default function HomePage() {
             </button>
           </div>
         )}
+        {anEmptyFields && (
+          <div className="alert alert-warning" id="emptyWarning" role="alert">
+            Please make sure all fields are not empty{" "}
+            <button
+              className="btn btn-outline-warning d-flex justify-content-between"
+              onClick={() => {
+                setEmptyFields(false);
+              }}
+            >
+              {" "}
+              <FaTimes />
+            </button>
+          </div>
+        )}
+        {updated && (
+          <div className="alert alert-success" id="updateSuccess" role="alert">
+            User has been activated
+            <button
+              className="btn btn-outline-success d-flex justify-content-between"
+              onClick={() => {
+                setUpdated(false);
+              }}
+            >
+              {" "}
+              <FaTimes />
+            </button>
+          </div>
+        )}
         <div className="row">
           <button
-            className="col-sm m-2"
+            className="col-sm m-4 btn btn-primary btn-lg"
             onClick={() => {
               setToCreate(true);
               setEmail("");
@@ -101,7 +153,7 @@ export default function HomePage() {
         </div>
 
         {toCreate && (
-          <div className="row m-5">
+          <div className="row m-5 border rounded ">
             <div className="text-center">
               <button
                 type="button"
@@ -165,23 +217,45 @@ export default function HomePage() {
               <th scope="col">Email</th>
               <th scope="col">Name</th>
               <th scope="col">Address</th>
+              <th scope="col">Status</th>
               <th scope="col">Action</th>
             </tr>
           </thead>
           <tbody>
             {firestoreData.map((element) => {
               return (
-                <tr>
+                <tr key={element.id}>
                   <th scope="row">{element.id}</th>
                   <td>{element.Email}</td>
                   <td>{element.Name}</td>
                   <td>{element.Address}</td>
+
+                  <td>
+                    {" "}
+                    <div
+                      style={{
+                        backgroundColor:
+                          element.Status === "Activated" ? "green" : "red",
+                        padding: 2,
+                        borderRadius: 100,
+                        width: 10,
+                        height: 10,
+                      }}
+                    ></div>
+                    {element.Status}
+                  </td>
                   <td>
                     <button
-                      className="btn btn-danger"
+                      className="m-1 btn btn-danger"
                       onClick={() => deleteData(element.id)}
                     >
                       Delete
+                    </button>
+                    <button
+                      className="m-1 btn btn-success"
+                      onClick={() => updateData(element.id)}
+                    >
+                      Activate
                     </button>
                   </td>
                 </tr>
