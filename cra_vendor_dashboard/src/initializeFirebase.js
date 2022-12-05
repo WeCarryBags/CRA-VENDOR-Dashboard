@@ -3,13 +3,13 @@ import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "@firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAItdtUgwfKm2e_9m8cEITk95w1GZhJxPQ",
-  authDomain: "carrybagsdashboard.firebaseapp.com",
-  projectId: "carrybagsdashboard",
-  storageBucket: "carrybagsdashboard.appspot.com",
-  messagingSenderId: "622016218507",
-  appId: "1:622016218507:web:f810c549576d4ddc765b8e",
-  measurementId: "G-XEHEBVXZY2",
+  apiKey: process.env.REACT_APP_API_KEY,
+  authDomain: process.env.REACT_APP_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_MESSAGING_SENDERID,
+  appId: process.env.REACT_APP_APP_ID,
+  measurementId: process.env.REACT_APP_MEASUREMENTID,
 };
 
 // Initialize Firebase
